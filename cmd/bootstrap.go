@@ -8,6 +8,7 @@ import (
 	"github.com/daffadon/graphy/config/logger"
 	"github.com/daffadon/graphy/config/router"
 	"github.com/daffadon/graphy/graph"
+	"github.com/daffadon/graphy/internal/domain/notes"
 	"github.com/daffadon/graphy/internal/domain/users"
 	"github.com/daffadon/graphy/internal/infrastructure/database"
 	"github.com/go-chi/chi/v5"
@@ -28,11 +29,13 @@ func BootstrapRun() *IBootstrap {
 	dbcon := _database.NewSQLConn(slog)
 	q := database.NewQuerier(dbcon)
 	ur := users.NewUserRepository(q, slog)
+	nr := notes.NewNoteRepository(q, slog)
 	r := router.NewHTTPRouter()
 
 	return &IBootstrap{
 		G: &graph.Resolver{
 			Ur: ur,
+			Nr: nr,
 			S:  slog,
 		},
 		S:  slog,
