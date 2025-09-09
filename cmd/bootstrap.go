@@ -33,6 +33,7 @@ func BootstrapRun() *IBootstrap {
 	return &IBootstrap{
 		G: &graph.Resolver{
 			Ur: ur,
+			S:  slog,
 		},
 		S:  slog,
 		DB: dbcon,
