@@ -1,0 +1,55 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type User {
+  id: ID!
+  email: String!
+  fullname: String!
+  password: String!
+}
+
+type Note {
+  id: ID!
+  title: String!
+  description: String!
+  text: String!
+  user: User!
+}
+
+type Query {
+  Notes: [Note!]!
+}
+
+input NewNote {
+  title: String!
+  description: String!
+  text: String!
+}
+
+input DeleteNote {
+  id: ID!
+}
+
+input RefreshTokenInput {
+  token: String!
+}
+
+input NewUser {
+  username: String!
+  password: String!
+}
+
+input Login {
+  username: String!
+  password: String!
+}
+
+type Mutation {
+  createUser(input: NewUser!): String!
+  login(input: Login!): String!
+  refreshToken(input: RefreshTokenInput!): String!
+
+  createNote(input: NewNote!): Note!
+  deleteTodo(input: DeleteNote): Boolean!
+}
