@@ -46,8 +46,8 @@ func main() {
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
-	b.R.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	b.R.Handle("/query", srv)
+	b.R.Handle("/", playground.Handler("GraphQL playground", "/gq"))
+	b.R.Handle("/gq", srv)
 
 	server := &http.Server{
 		Addr:    ":" + port,
