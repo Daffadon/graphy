@@ -13,8 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/daffadon/graphy/cmd"
+	"github.com/daffadon/graphy/config/router"
 	"github.com/daffadon/graphy/graph"
 	database "github.com/daffadon/graphy/internal/pkg/database/postgresql"
 	"github.com/spf13/viper"
@@ -46,12 +46,13 @@ func main() {
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
-	b.R.Handle("/", playground.Handler("GraphQL playground", "/gq"))
-	b.R.Handle("/gq", srv)
+	r := router.NewHTTPRouter()
+
+	r.Handle("/gq", srv)
 
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: b.R,
+		Handler: r,
 	}
 
 	quit := make(chan os.Signal, 1)
