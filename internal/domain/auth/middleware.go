@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/daffadon/graphy/internal/domain/dto"
@@ -24,11 +25,31 @@ func Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			//validate jwt token
-			tokenStr := header
+			tokenStr := ""
+			if len(header) > 7 && header[:7] == "Bearer " {
+				tokenStr = header[7:]
+			} else {
+				tokenStr = header
+			}
 			cl, err := jwt.ValidateToken(tokenStr)
 			if err != nil {
-				http.Error(w, "Invalid token", http.StatusForbidden)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				response := map[string]interface{}{
+					"errors": []map[string]interface{}{
+						{
+							"message": "Invalid token",
+							"extensions": map[string]interface{}{
+								"code": "FORBIDDEN",
+							},
+						},
+					},
+					"data": nil,
+				}
+
+				json.NewEncoder(w).Encode(response)
 				return
 			}
 
