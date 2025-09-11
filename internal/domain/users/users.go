@@ -2,11 +2,14 @@ package users
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/daffadon/graphy/internal/domain/dto"
 	"github.com/daffadon/graphy/internal/infrastructure/database"
+	"github.com/jackc/pgx/v5"
 )
 
 type (
@@ -41,7 +44,10 @@ func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (dto.
 	var user dto.User
 	err = u.q.QueryRow(ctx, query, args...).Scan(&user.ID, &user.Email, &user.Fullname, &user.Password)
 	if err != nil {
-		u.l.Error("failed to execute query", slog.Any("err", err))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dto.User{}, nil
+		}
+		u.l.Error(fmt.Sprintf("failed to execute query Err: %v", err))
 		return dto.User{}, err
 	}
 	return user, nil
