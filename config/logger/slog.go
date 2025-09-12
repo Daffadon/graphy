@@ -33,7 +33,7 @@ func (h *ColorTextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 func NewSlog() *slog.Logger {
 	baseHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: slog.LevelDebug,
 	})
 	colorHandler := &ColorTextHandler{Handler: baseHandler}
 	return slog.New(colorHandler)
