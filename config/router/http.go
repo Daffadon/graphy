@@ -1,6 +1,7 @@
 package router
 
 import (
+	"os"
 	"strings"
 
 	"github.com/daffadon/graphy/internal/domain/auth"
@@ -12,7 +13,10 @@ import (
 
 func NewHTTPRouter() *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	env := os.Getenv("ENV")
+	if env != "production" {
+		r.Use(middleware.Logger)
+	}
 
 	allowOrigins := viper.GetString("server.cors.allow_origins")
 	allowMethods := viper.GetString("server.cors.allow_methods")
@@ -28,7 +32,6 @@ func NewHTTPRouter() *chi.Mux {
 		ExposedHeaders:   strings.Split(exposeHeaders, ","),
 		AllowCredentials: allowCredentials,
 		MaxAge:           maxAge,
-		// Debug:            true,
 	}).Handler)
 	r.Use(auth.Middleware())
 	return r
