@@ -7,7 +7,7 @@ type DeleteNote struct {
 }
 
 type Login struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -21,7 +21,8 @@ type NewNote struct {
 }
 
 type NewUser struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
+	Fullname string `json:"fullname"`
 	Password string `json:"password"`
 }
 
@@ -30,7 +31,6 @@ type Note struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Text        string `json:"text"`
-	User        *User  `json:"user"`
 }
 
 type Query struct {
@@ -38,6 +38,13 @@ type Query struct {
 
 type RefreshTokenInput struct {
 	Token string `json:"token"`
+}
+
+type UpdatedNote struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Text        *string `json:"text,omitempty"`
+	Noteid      string  `json:"noteid"`
 }
 
 type User struct {

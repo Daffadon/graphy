@@ -14,17 +14,24 @@ type Note {
   title: String!
   description: String!
   text: String!
-  user: User!
 }
 
 type Query {
-  Notes: [Note!]!
+  notes: [Note!]!
+  note(id: ID!): Note
 }
 
 input NewNote {
   title: String!
   description: String!
   text: String!
+}
+
+input UpdatedNote {
+  title: String
+  description: String
+  text: String
+  noteid: String!
 }
 
 input DeleteNote {
@@ -36,20 +43,22 @@ input RefreshTokenInput {
 }
 
 input NewUser {
-  username: String!
+  email: String!
+  fullname: String!
   password: String!
 }
 
 input Login {
-  username: String!
+  email: String!
   password: String!
 }
 
 type Mutation {
-  createUser(input: NewUser!): String!
+  createUser(input: NewUser!): Boolean!
   login(input: Login!): String!
   refreshToken(input: RefreshTokenInput!): String!
 
-  createNote(input: NewNote!): Note!
-  deleteTodo(input: DeleteNote): Boolean!
+  createNote(input: NewNote!): Boolean!
+  updateNote(input: UpdatedNote!): Boolean!
+  deleteNote(input: DeleteNote): Boolean!
 }
