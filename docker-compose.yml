@@ -7,10 +7,18 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     volumes:
       - postgresql-data:/var/lib/postgresql/data
+  graphy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080/tcp"
+    container_name: graphy
+    restart: unless-stopped
+    environment:
+      - ENV=production
 
 volumes:
   postgresql-data: {}
