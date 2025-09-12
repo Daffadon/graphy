@@ -19,3 +19,6 @@ server:
     expose_headers: "Content-Length,Content-Range"
     max_age: 86400
     allow_credential: true
+
+jwt:
+  s_key: 
