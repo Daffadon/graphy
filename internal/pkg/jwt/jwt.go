@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 )
 
-var secretKey = []byte("your-secret-key")
+var secretKey = []byte(viper.GetString("jwt.s_key"))
 
 type Claims struct {
 	UserID string `json:"user_id"`
