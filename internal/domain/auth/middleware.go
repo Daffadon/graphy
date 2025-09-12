@@ -35,8 +35,6 @@ func Middleware() func(http.Handler) http.Handler {
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusForbidden)
 				response := map[string]interface{}{
 					"errors": []map[string]interface{}{
 						{
