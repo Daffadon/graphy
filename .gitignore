@@ -33,3 +33,4 @@ go.work.sum
 
 tmp
 config.local.yaml
+config.yaml
