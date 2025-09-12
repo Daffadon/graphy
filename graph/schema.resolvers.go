@@ -6,19 +6,65 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/daffadon/graphy/graph/model"
+	"github.com/daffadon/graphy/internal/domain/auth"
+	"github.com/daffadon/graphy/internal/domain/dto"
+	"github.com/daffadon/graphy/internal/pkg/jwt"
+	"github.com/daffadon/graphy/internal/pkg/utils"
+	"github.com/google/uuid"
 )
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (bool, error) {
+	exist, err := r.Ur.GetUserByEmail(ctx, input.Email)
+	if err != nil {
+		return false, err
+	}
+	if exist.ID != "" {
+		return false, errors.New("email has been used")
+	}
+
+	userId, err := uuid.NewV7()
+	if err != nil {
+		return false, err
+	}
+	hashedPassword, err := utils.HashPassword(input.Password)
+	if err != nil {
+		return false, err
+	}
+	u := &dto.User{
+		ID:       userId.String(),
+		Email:    input.Email,
+		Fullname: input.Fullname,
+		Password: hashedPassword,
+	}
+	if err := r.Ur.CreateUser(ctx, u); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
+	exist, err := r.Ur.GetUserByEmail(ctx, input.Email)
+	if err != nil {
+		return "", err
+	}
+	if exist.ID == "" {
+		return "", errors.New("user not found")
+	}
+	if ok := utils.CheckPasswordHash(input.Password, exist.Password); !ok {
+		return "", errors.New("email or password is wrong")
+	}
+	jwt, err := jwt.GenerateToken(exist.ID, 2*time.Hour)
+	if err != nil {
+		return "", err
+	}
+	return jwt, nil
 }
 
 // RefreshToken is the resolver for the refreshToken field.
@@ -27,18 +73,84 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 // CreateNote is the resolver for the createNote field.
-func (r *mutationResolver) CreateNote(ctx context.Context, input model.NewNote) (*model.Note, error) {
-	panic(fmt.Errorf("not implemented: CreateNote - createNote"))
+func (r *mutationResolver) CreateNote(ctx context.Context, input model.NewNote) (bool, error) {
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return false, errors.New("unauthorized")
+	}
+	noteid, err := uuid.NewV7()
+	if err != nil {
+		return false, err
+	}
+	n := &dto.Note{
+		ID:          noteid.String(),
+		Title:       input.Title,
+		Description: input.Description,
+		Text:        input.Text,
+	}
+	if err := r.Nr.CreateNewNote(ctx, n, user.ID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-// DeleteTodo is the resolver for the deleteTodo field.
-func (r *mutationResolver) DeleteTodo(ctx context.Context, input *model.DeleteNote) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteTodo - deleteTodo"))
+// UpdateNote is the resolver for the updateNote field.
+func (r *mutationResolver) UpdateNote(ctx context.Context, input model.UpdatedNote) (bool, error) {
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return false, errors.New("unauthorized")
+	}
+	note, err := r.Nr.GetNote(ctx, input.Noteid, user.ID)
+	if err != nil {
+		return false, err
+	}
+	if note.Title != *input.Title {
+		note.Title = *input.Title
+	}
+	if note.Description != *input.Description {
+		note.Description = *input.Description
+	}
+	if note.Text != *input.Text {
+		note.Text = *input.Text
+	}
+	if err := r.Nr.UpdateNote(ctx, note, user.ID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// DeleteNote is the resolver for the deleteNote field.
+func (r *mutationResolver) DeleteNote(ctx context.Context, input *model.DeleteNote) (bool, error) {
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return false, errors.New("unauthorized")
+	}
+	if err := r.Nr.DeleteNote(ctx, input.ID, user.ID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Notes is the resolver for the Notes field.
 func (r *queryResolver) Notes(ctx context.Context) ([]*model.Note, error) {
-	panic(fmt.Errorf("not implemented: Notes - Notes"))
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return []*model.Note{}, errors.New("unauthorized")
+	}
+	ns, err := r.Nr.GetAllNotes(ctx, user.ID)
+	if err != nil {
+		return []*model.Note{}, err
+	}
+	return ns, nil
+}
+
+// Note is the resolver for the note field.
+func (r *queryResolver) Note(ctx context.Context, id string) (*model.Note, error) {
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return nil, errors.New("unauthorized")
+	}
+	return r.Nr.GetNote(ctx, id, user.ID)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -49,19 +161,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	fmt.Println("123123")
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
-}
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
-}
-*/

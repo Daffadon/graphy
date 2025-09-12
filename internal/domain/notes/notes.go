@@ -13,6 +13,7 @@ import (
 type (
 	NoteRepository interface {
 		CreateNewNote(ctx context.Context, note *dto.Note, userId string) error
+		UpdateNote(ctx context.Context, note *model.Note, userId string) error
 		DeleteNote(ctx context.Context, noteid, userid string) error
 		GetAllNotes(ctx context.Context, userid string) ([]*model.Note, error)
 		GetNote(ctx context.Context, noteid, userid string) (*model.Note, error)
@@ -28,6 +29,28 @@ func NewNoteRepository(q database.Querier, l *slog.Logger) NoteRepository {
 		q: q,
 		l: l,
 	}
+}
+
+func (n *noteRepository) UpdateNote(ctx context.Context, note *model.Note, userId string) error {
+	query, args, err := sq.
+		Update("notes").
+		Set("title", note.Title).
+		Set("description", note.Description).
+		Set("text", note.Text).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": note.ID, "user_id": userId}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		n.l.Error("failed to build update query", slog.Any("error", err))
+		return err
+	}
+	_, err = n.q.Exec(ctx, query, args...)
+	if err != nil {
+		n.l.Error("failed to update note", slog.Any("error", err))
+		return err
+	}
+	return nil
 }
 
 func (n *noteRepository) GetNote(ctx context.Context, noteid string, userid string) (*model.Note, error) {
